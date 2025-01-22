@@ -1,6 +1,6 @@
 from TransacaoBancaria import TransacaoBancaria
-from ContaBancaria import ContaBancaria
-import threading
+from ContaBancaria import ContaBancaria # Importa a classe ContaBancaria do módulo ContaBancaria.py
+import threading # Importa o módulo para trabalhar com threads.
 import random
 
 # Lock global para sincronizar impressões
