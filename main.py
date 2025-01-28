@@ -1,32 +1,36 @@
 from TransacaoBancaria import TransacaoBancaria
-from ContaBancaria import ContaBancaria # Importa a classe ContaBancaria do módulo ContaBancaria.py
-import threading # Importa o módulo para trabalhar com threads.
-import random
+from ContaBancaria import ContaBancaria  # Importa a classe que representa uma conta bancária.
+import threading  # Importa o módulo para trabalhar com threads.
+import random  # Importa o módulo para gerar valores aleatórios.
 
-# Lock global para sincronizar impressões
+# Lock global para sincronizar impressões no console, evitando que múltiplas threads causem sobreposição.
 print_lock = threading.Lock()
 
+# Exibe a lista de contas bancárias disponíveis.
 def mostrar_contas(contas):
     print("\nContas disponíveis:")
     for conta in contas:
         print(f"ID: {conta.id_conta}, Saldo: {conta.saldo:.2f}")
 
+# Permite o cadastro de uma nova conta bancária, solicitando um saldo inicial ao usuário.
 def cadastrar_conta(contas):
-    id_conta = len(contas) + 1
-    saldo = float(input(f"Digite o saldo inicial para a Conta {id_conta}: "))
-    nova_conta = ContaBancaria(id_conta=id_conta, saldo=saldo)
-    contas.append(nova_conta)
+    id_conta = len(contas) + 1  # Define o ID da nova conta como o próximo número disponível.
+    saldo = float(input(f"Digite o saldo inicial para a Conta {id_conta}: "))  # Solicita o saldo inicial.
+    nova_conta = ContaBancaria(id_conta=id_conta, saldo=saldo)  # Cria uma nova conta bancária.
+    contas.append(nova_conta)  # Adiciona a conta à lista de contas.
     print(f"Conta {id_conta} cadastrada com sucesso!\n")
 
+# Realiza transferências aleatórias entre contas, simulando operações concorrentes.
 def realizar_transferencias_aleatorias(contas, transacao_bancaria):
-    for _ in range(100):  # Cada thread realiza 100 transferências
-        conta_origem = random.choice(contas)
-        conta_destino = random.choice([c for c in contas if c != conta_origem])
-        valor = random.uniform(1, 50)
-        with print_lock:
+    for _ in range(100):  # Cada thread realiza 100 transferências.
+        conta_origem = random.choice(contas)  # Seleciona uma conta de origem aleatoriamente.
+        conta_destino = random.choice([c for c in contas if c != conta_origem])  # Seleciona uma conta de destino diferente.
+        valor = random.uniform(1, 50)  # Define um valor aleatório para a transferência.
+        with print_lock:  # Garante que apenas uma thread por vez imprime no console.
             transacao_bancaria.transferir(conta_origem, conta_destino, valor)
             print(f"Transferência de {valor:.2f} realizada com sucesso! Conta origem: {conta_origem.id_conta}, Conta destino: {conta_destino.id_conta}")
 
+# Executa um teste de alta concorrência com múltiplas threads.
 def teste_alta_concorrencia(contas, transacao_bancaria):
     print("\nExecutando Cenário 2: Alta Concorrência")
     if len(contas) < 100:
@@ -35,17 +39,18 @@ def teste_alta_concorrencia(contas, transacao_bancaria):
             contas.append(ContaBancaria(id_conta=len(contas) + 1, saldo=random.randint(100, 1000)))
 
     threads = []
-    for _ in range(50):  # 50 threads
+    for _ in range(50):  # Cria 50 threads para simular transferências simultâneas.
         thread = threading.Thread(target=realizar_transferencias_aleatorias, args=(contas, transacao_bancaria))
         threads.append(thread)
         thread.start()
 
     for thread in threads:
-        thread.join()
+        thread.join()  # Aguarda a conclusão de todas as threads.
 
-    saldo_total = sum(conta.saldo for conta in contas)
+    saldo_total = sum(conta.saldo for conta in contas)  # Calcula o saldo total após o teste.
     print(f"Saldo total após o teste de alta concorrência: {saldo_total}")
 
+# Testa o comportamento do sistema quando há saldo insuficiente para realizar uma transferência.
 def teste_saldo_insuficiente(contas, transacao_bancaria):
     print("\nExecutando Cenário 3: Saldo Insuficiente")
     if len(contas) < 2:
@@ -55,15 +60,16 @@ def teste_saldo_insuficiente(contas, transacao_bancaria):
 
     conta_origem = contas[0]
     conta_destino = contas[1]
-    valor = conta_origem.saldo + 100  # Valor superior ao saldo disponível
-    with print_lock:
+    valor = conta_origem.saldo + 100  # Define um valor maior que o saldo disponível na conta de origem.
+    with print_lock:  # Garante que a mensagem de erro não seja interrompida por outra thread.
         transacao_bancaria.transferir(conta_origem, conta_destino, valor)
         print(f"Transferência de {valor:.2f} falhou! Saldo insuficiente na Conta origem: {conta_origem.id_conta}")
     mostrar_contas(contas)
 
+# Menu principal do sistema.
 def main():
-    contas = []
-    transacao_bancaria = TransacaoBancaria()
+    contas = []  # Lista de contas bancárias.
+    transacao_bancaria = TransacaoBancaria()  # Instância para gerenciar as transferências.
 
     while True:
         print("\nMenu do Sistema Bancário")
@@ -92,14 +98,15 @@ def main():
             teste_saldo_insuficiente(contas, transacao_bancaria)
         elif opcao == "6":
             print("\nLogs de Transações:")
-            for log in transacao_bancaria.log:
+            for log in transacao_bancaria.log:  # Exibe os logs das transferências realizadas.
                 print(log)
         elif opcao == "7":
-            print("Encerrando o sistema. Até logo!")
+            print("Encerrando o sistema. Até logo!")  # Encerra o sistema.
             break
         else:
             print("Opção inválida. Tente novamente.\n")
 
+# Realiza uma transferência manual entre contas.
 def realizar_transferencia(contas, transacao_bancaria):
     try:
         mostrar_contas(contas)
@@ -120,5 +127,6 @@ def realizar_transferencia(contas, transacao_bancaria):
     except ValueError:
         print("Entrada inválida. Certifique-se de digitar números válidos.\n")
 
+# Executa o menu principal se o script for executado diretamente.
 if __name__ == "__main__":
     main()
